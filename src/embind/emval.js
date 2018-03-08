@@ -300,6 +300,13 @@ var LibraryEmVal = {
     return first < second;
   },
 
+  _emval_invoke_spread__deps: ['_emval_register', '$requireHandle'],
+  _emval_invoke_spread: function(func, args) {
+    func = requireHandle(func);
+    args = requireHandle(args);
+    return __emval_register(func.apply(null, args));
+  },
+
   _emval_call__deps: ['_emval_lookupTypes', '_emval_register', '$requireHandle'],
   _emval_call: function(handle, argCount, argTypes, argv) {
     handle = requireHandle(handle);
@@ -332,6 +339,14 @@ var LibraryEmVal = {
     var destructors = [];
     HEAP32[destructorsRef >> 2] = __emval_register(destructors);
     return destructors;
+  },
+
+  _emval_call_spread__deps: ['_emval_register', '$requireHandle'],
+  _emval_call_spread: function(object, property, args) {
+    object = requireHandle(object);
+    property = requireHandle(property);
+    args = requireHandle(args);
+    return __emval_register(object[property](args));
   },
 
   // Leave id 0 undefined.  It's not a big deal, but might be confusing

@@ -65,6 +65,9 @@ namespace emscripten {
             bool _emval_greater_than(EM_VAL first, EM_VAL second);
             bool _emval_less_than(EM_VAL first, EM_VAL second);
 
+            EM_VAL _emval_invoke_spread(EM_VAL function, EM_VAL args);
+
+            EM_VAL _emval_call_spread(EM_VAL object, EM_VAL property, EM_VAL args);
             EM_VAL _emval_call(
                 EM_VAL value,
                 unsigned argCount,
@@ -458,9 +461,24 @@ namespace emscripten {
             internal::_emval_set_property(handle, val(key).handle, val(value).handle);
         }
 
+        // does not overload correctly
+        template<typename T>
+        val operator()(const std::vector<T> args) const {
+            val arr = array(args);
+            return val(_emval_invoke_spread(handle, arr.handle));
+        }
+
         template<typename... Args>
         val operator()(Args&&... args) const {
             return internalCall(internal::_emval_call, std::forward<Args>(args)...);
+        }
+
+        // not working
+        template<typename ReturnValue, typename T>
+        ReturnValue call(const char* name, const std::vector<T> args) const {
+            val n = val(name);
+            val arr = array(args);
+            return val(_emval_call_spread(handle, n.handle, arr.handle)); // need to change this
         }
 
         template<typename ReturnValue, typename... Args>
