@@ -1877,7 +1877,7 @@ var LibraryEmbind = {
             }
 
             var constructor = createNamedFunction(legalFunctionName, function() {
-                if (Object.getPrototypeOf(this) !== instancePrototype) {
+                if (!(this instanceof registeredClass.constructor)) {
                     throw new BindingError("Use 'new' to construct " + name);
                 }
                 if (undefined === registeredClass.constructor_body) {

@@ -67,6 +67,22 @@ EMSCRIPTEN_BINDINGS(test_bindings)
   emscripten::function("throw_js_error", &throw_js_error);
 }
 
+class TestClass
+{ 
+  public:
+  TestClass() {}
+  int r(int a) { return a + 1; }
+};
+
+EMSCRIPTEN_BINDINGS(test_class)
+{
+  class_<TestClass>("TestClass")
+    .constructor<>()
+    .function("r", &TestClass::r)
+    ;
+}
+
+
 int main()
 {
   printf("start\n");
@@ -441,6 +457,14 @@ int main()
   ensure(val::global("a").as<double>() == (double)1.0);
   ensure_not(val::global("a").as<double>() == (double)1.1);
   ensure(val::global("b").as<string>() == "b");
+  // access properties and methods of superclass of derived class
+  EM_ASM(
+    a = 1;
+    b = 'b';
+    TestClassE = class extends Module.TestClass {};
+    i = new TestClassE;
+  );
+  ensure(val::global("i").as<TestClass>().r(3) == 4);
   
   // test: 
   // val typeof()

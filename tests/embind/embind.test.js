@@ -1203,6 +1203,19 @@ module({
             assert.equal("Use 'new' to construct ValHolder", e.message);
         });
 
+        test("calling constructor of extended class without new raises BindingError", function() {
+            var ValHolderE = function(v) {
+              cm.ValHolder.call(this, v);
+            };
+            ValHolderE.prototype = Object.create(cm.ValHolder.prototype);
+            ValHolderE.prototype.constructor = cm.ValHolder;
+            var e = assert.throws(cm.BindingError, function() {
+                ValHolderE(undefined);
+            });
+            // could be fixed to give the extended class name instead
+            assert.equal("Use 'new' to construct ValHolder", e.message);
+        });
+
         test("can return class instances by value", function() {
             var c = cm.emval_test_return_ValHolder();
             assert.deepEqual({}, c.getVal());
@@ -1751,6 +1764,51 @@ module({
             assert.equal(10, c.patched);
             c.delete();
             cm.ValHolder.prototype.patched = undefined;
+        });
+
+        test("can create instance of extended class", function() {
+            var ValHolderE = class extends cm.ValHolder {};
+            var c = new ValHolderE(undefined);
+        });
+
+        test("can create instance of extended class", function() {
+            var ValHolderE = class extends cm.ValHolder {};
+            var a = {};
+            var c = new ValHolderE(a);
+            assert.equal(a, c.getVal());
+        });
+
+        test("can create instance of extended class with arguments", function() {
+            var ValHolder = cm.ValHolder;
+            var ValHolderE = class extends ValHolder {
+              constructor(v, a)
+              {
+                super(v);
+                this.a = a;
+              }
+            };
+            var b = {};
+            var i = new ValHolderE(undefined, b);
+            assert.equal(b, i.a);
+        });
+
+        test("can add properties and methods to extended class", function() {
+            var ValHolder = cm.ValHolder;
+            var ValHolderE = class extends ValHolder {};
+            ValHolderE.a = 2;
+            ValHolderE.b = function(c) { return c + 1 };
+            ValHolderE.prototype.d = 3;
+            ValHolderE.prototype.e = function(f) { return f + 2 };
+            var i = new ValHolder(undefined);
+            var ie = new ValHolderE(undefined);
+            assert.equal(undefined, ValHolder.a);
+            assert.equal(undefined, ValHolder.b);
+            assert.equal(undefined, i.d);
+            assert.equal(undefined, i.e);
+            assert.equal(2, ValHolderE.a);
+            assert.equal(5, ValHolderE.b(4));
+            assert.equal(3, ie.d);
+            assert.equal(8, ie.e(6));
         });
     });
 
