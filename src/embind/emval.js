@@ -274,7 +274,12 @@ var LibraryEmVal = {
   _emval_equals: function(first, second) {
     first = requireHandle(first);
     second = requireHandle(second);
-    return first == second;
+    // comparison is protected from rare errors such as what will result from: [Symbol()] == 1
+    try {
+      return first == second;
+    } catch(e) {
+      return false;
+    }
   },
 
   _emval_strictly_equals__deps: ['$requireHandle'],
