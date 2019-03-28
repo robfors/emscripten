@@ -576,10 +576,54 @@ namespace emscripten {
     template<typename T>
     std::vector<T> vecFromJSArray(val v) {
         auto l = v["length"].as<unsigned>();
-
         std::vector<T> rv;
-        for(unsigned i = 0; i < l; ++i) {
-            rv.push_back(v[i].as<T>());
+        rv.reserve(l);
+
+        if (internal::typeSupportsMemoryView<T>()) {
+            rv.resize(l);
+
+            const char *arrayType;
+
+            switch (sizeof(T)) {
+                case 1:
+                    if (std::is_unsigned<T>::value) {
+                        arrayType = "Uint8Array";
+                    } else {
+                        arrayType = "Int8Array";
+                    }
+                    break;
+                case 2:
+                    if (std::is_unsigned<T>::value) {
+                        arrayType = "Uint16Array";
+                    } else {
+                        arrayType = "Int16Array";
+                    }
+                    break;
+                case 4:
+                    if (std::is_unsigned<T>::value) {
+                        arrayType = "Uint32Array";
+                    } else if (std::is_integral<T>::value) {
+                        arrayType = "Int32Array";
+                    } else {
+                        arrayType = "Float32Array";
+                    }
+                    break;
+                case 8:
+                    arrayType = "Float64Array";
+                    break;
+                default:
+                    //This should be never reached if the 'typeSupportsMemoryView' function returns true.
+                    throw std::logic_error("Unreachable");
+            }
+
+            val memory = val::module_property("buffer");
+            val memoryView = val::global(arrayType).new_(memory, reinterpret_cast<std::uintptr_t>(rv.data()), l);
+
+            memoryView.call<void>("set", v);
+        } else {
+            for (unsigned i = 0; i < l; ++i) {
+                rv.push_back(v[i].as<T>());
+            }
         }
 
         return rv;
